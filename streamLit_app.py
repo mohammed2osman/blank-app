@@ -1,7 +1,6 @@
 import streamlit as st
 import datetime
 import pandas as pd
-import io
 
 # إعدادات الصفحة
 st.set_page_config(page_title="نظام إدارة الصيانة الاحترافية", page_icon="🛠️", layout="wide")
@@ -55,24 +54,20 @@ with col_form:
         if not department or not maintenance_type or not equipment_name or not technicians_names:
             st.error("يرجى ملء الحقول الأساسية: القسم، نوع الصيانة، المعدة، وأسماء القائمين.")
         else:
-            # دمج التاريخ والوقت للبدء والانتهاء
             start_datetime = datetime.datetime.combine(start_date, start_time)
             end_datetime = datetime.datetime.combine(end_date, end_time)
             
-            # حساب الفرق (وقت الانتهاء - وقت العمل)
             time_difference = end_datetime - start_datetime
             
             if time_difference.total_seconds() < 0:
                 st.error("❌ خطأ: وقت الانتهاء لا يمكن أن يكون قبل وقت بدء العمل!")
             else:
-                # تحويل الفارق لشكل مقروء (ساعات ودقائق)
                 total_seconds = int(time_difference.total_seconds())
                 hours = total_seconds // 3600
                 minutes = (total_seconds % 3600) // 60
                 
                 work_duration = f"{hours} ساعة و {minutes} دقيقة" if hours > 0 else f"{minutes} دقيقة"
                 
-                # إضافة السجل للجدول
                 new_record = {
                     "القسم": department,
                     "نوع الصيانة": maintenance_type,
@@ -86,7 +81,7 @@ with col_form:
                     "قطع الغيار": spare_parts
                 }
                 st.session_state['maintenance_records'].append(new_record)
-                st.success(f"✅ تم تسجيل الأمر بنجاح! الفترة المستغرقة: {work_duration}")
+                st.success(f"✅ تم تسجيل الأمر بنجاح! الفترة: {work_duration}")
                 st.rerun()
 
 with col_data:
@@ -95,27 +90,20 @@ with col_data:
     if len(st.session_state['maintenance_records']) == 0:
         st.info("لا توجد أوامر صيانة مسجلة حالياً. قم بملء النموذج على اليمين للبدء.")
     else:
-        # تحويل القائمة المحدثة إلى جدول Dataframe
         df = pd.DataFrame(st.session_state['maintenance_records'])
-        
-        # عرض الجدول بشكل تفاعلي أمامك
         st.dataframe(df, use_container_width=True)
         
-        # تحويل الجدول لملف Excel في الخلفية جاهز للتحميل
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='أوامر الصيانة')
-        buffer.seek(0)
+        # تحويل الجدول لملف جاهز يفتح على الإكسيل مباشرة ويدعم اللغة العربية
+        csv_data = df.to_csv(index=False, encoding='utf-8-sig')
         
-        # زرار سحب الإكسيل
+        # زرار التحميل
         st.download_button(
             label="📥 تحميل البيانات كـ ملف Excel",
-            data=buffer,
-            file_name=f"maintenance_report_{datetime.date.today()}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            data=csv_data,
+            file_name=f"maintenance_report_{datetime.date.today()}.csv",
+            mime="text/csv"
         )
         
-        # زرار إضافي لتصفير الجدول
         if st.button("🗑️ مسح الجدول الحالي"):
             st.session_state['maintenance_records'] = []
             st.rerun()
