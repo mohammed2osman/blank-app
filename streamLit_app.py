@@ -47,6 +47,6 @@ elif choice == "أوامر الصيانة (WO)":
         wo_type = st.selectbox("نوع الصيانة", ["صيانة وقائية (PM)", "صيانة تصحيحية/طارئة (CM)", "فحص دوري"])
         wo_desc = st.text_area("وصف دقيق للمشكلة (مثال: فحص العزل، قياس الفولت بالأفووميتر، اهتزاز في العضو الدوار)")
         
-        submitted = st.form_submit_submit_button("تسجيل أمر الصيانة")
+        submitted = st.form_submit_button("تسجيل أمر الصيانة")
         if submitted:
             st.success(f"✔️ تم حفظ أمر الصيانة بنجاح: {wo_title} ({wo_type})")
